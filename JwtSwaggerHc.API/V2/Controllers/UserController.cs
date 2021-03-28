@@ -1,7 +1,10 @@
 ﻿using JwtSwaggerHc.API.Authorization;
+using JwtSwaggerHc.API.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using System.Threading.Tasks;
 
 namespace JwtSwaggerHc.API.V2.Controllers
 {
@@ -10,6 +13,13 @@ namespace JwtSwaggerHc.API.V2.Controllers
     [Route("api/v{version:apiVersion}/[controller]")]
     public class UserController : ControllerBase
     {
+        private readonly IHubContext<NotificationHub> _hubContext;
+
+        public UserController(IHubContext<NotificationHub> hubContext)
+        {
+            _hubContext = hubContext;
+        }
+
         /// <summary>
         /// Get user content
         /// </summary>
@@ -19,9 +29,13 @@ namespace JwtSwaggerHc.API.V2.Controllers
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public IActionResult GetUserData()
+        public async Task<IActionResult> GetUserData()
         {
-            return Ok("This is a response from USER method");
+            var result = "This is a response from USER method";
+
+            await new NotificationHub().SendMessage(_hubContext, "messageReceived", "GetUserData()", $"{result}");
+
+            return Ok(result);
         }
 
         /// <summary>
@@ -33,9 +47,13 @@ namespace JwtSwaggerHc.API.V2.Controllers
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public IActionResult GetManagerData()
+        public async Task<IActionResult> GetManagerData()
         {
-            return Ok("This is a response from MANAGER method");
+            var result = "This is a response from MANAGER method";
+
+            await new NotificationHub().SendMessage(_hubContext, "messageReceived", "GetManagerData()", $"{result}");
+
+            return Ok(result);
         }
 
         /// <summary>
@@ -47,9 +65,13 @@ namespace JwtSwaggerHc.API.V2.Controllers
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public IActionResult GetAdminData()
+        public async Task<IActionResult> GetAdminData()
         {
-            return Ok("This is a response from ADMIN method");
+            var result = "This is a response from ADMIN method";
+
+            await new NotificationHub().SendMessage(_hubContext, "messageReceived", "GetAdminData()", $"{result}");
+
+            return Ok(result);
         }
     }
 }

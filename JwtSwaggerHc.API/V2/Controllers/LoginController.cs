@@ -1,15 +1,19 @@
 ﻿using JwtSwaggerHc.API.Authorization;
+using JwtSwaggerHc.API.Hubs;
 using JwtSwaggerHc.API.V2.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace JwtSwaggerHc.API.V2.Controllers
 {
@@ -20,6 +24,7 @@ namespace JwtSwaggerHc.API.V2.Controllers
     public class LoginController : ControllerBase
     {
         private readonly IConfiguration _configuration;
+        private readonly IHubContext<NotificationHub> _hubContext;
 
         private List<User> users = new List<User>
         {
@@ -28,9 +33,10 @@ namespace JwtSwaggerHc.API.V2.Controllers
             new User { Username = "user1", Password = "1234", Role = Policies.User }
         };
 
-        public LoginController(IConfiguration configuration)
+        public LoginController(IConfiguration configuration, IHubContext<NotificationHub> hubContext)
         {
             _configuration = configuration;
+            _hubContext = hubContext;
         }
 
         /// <summary>
@@ -42,7 +48,7 @@ namespace JwtSwaggerHc.API.V2.Controllers
         [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public IActionResult Login(LoginRequest loginRequest)
+        public async Task<IActionResult> Login(LoginRequest loginRequest)
         {
             User user = AuthenticateUser(loginRequest);
             if (user == null)
@@ -52,11 +58,16 @@ namespace JwtSwaggerHc.API.V2.Controllers
 
             var token = GenerateJwt(user);
 
-            return Ok(new LoginResponse
+            var result = new LoginResponse
             {
                 Token = token,
                 User = user
-            });
+            };
+
+            await new NotificationHub().SendMessage(_hubContext, "messageReceived", $"Login({JsonConvert.SerializeObject(loginRequest)})", 
+                JsonConvert.SerializeObject(result));
+
+            return Ok(result);
         }
 
         /// <summary>
@@ -68,7 +79,7 @@ namespace JwtSwaggerHc.API.V2.Controllers
         [ProducesResponseType(typeof(ClaimsResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public IActionResult GetClaims(string token)
+        public async Task<IActionResult> GetClaims(string token)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:SecretKey"]));
 
@@ -94,10 +105,14 @@ namespace JwtSwaggerHc.API.V2.Controllers
                     Jti = claimsPrincipal.FindFirst("jti").Value
                 };
 
+                await new NotificationHub().SendMessage(_hubContext, "messageReceived", $"GetClaims({token})", JsonConvert.SerializeObject(result));
+
                 return Ok(new JsonResult(result));
             }
             catch (Exception ex)
             {
+                await new NotificationHub().SendMessage(_hubContext, "messageReceived", $"GetClaims({token})", JsonConvert.SerializeObject(ex));
+
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Invalid token: {ex.Message}");
             }
         }

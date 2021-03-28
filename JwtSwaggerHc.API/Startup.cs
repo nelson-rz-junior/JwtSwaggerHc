@@ -1,5 +1,6 @@
 using HealthChecks.UI.Client;
 using JwtSwaggerHc.API.Extensions;
+using JwtSwaggerHc.API.Hubs;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
@@ -30,7 +31,10 @@ namespace JwtSwaggerHc.API
             services.AddControllers();
 
             services.AddHealthChecks()
-                .AddCheck("Self", () => HealthCheckResult.Healthy());
+                .AddCheck("Self", () => HealthCheckResult.Healthy())
+                .AddSignalRHub(Configuration["SignalR:Url"], "JwtSwaggerHc.API SignalR");
+
+            services.AddSignalR();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -69,6 +73,7 @@ namespace JwtSwaggerHc.API
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHub<NotificationHub>("/hub");
             });
         }
     }
