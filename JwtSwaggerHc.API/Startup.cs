@@ -30,6 +30,15 @@ namespace JwtSwaggerHc.API
             services.AddPolicies();
             services.AddControllers();
 
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(builder => builder
+                    .SetIsOriginAllowed(_ => true)
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials());
+            });
+
             services.AddHealthChecks()
                 .AddCheck("Self", () => HealthCheckResult.Healthy())
                 .AddSignalRHub(Configuration["SignalR:Url"], "JwtSwaggerHc.API SignalR");
@@ -48,6 +57,8 @@ namespace JwtSwaggerHc.API
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.UseCors();
 
             app.UseAuthentication();
             app.UseAuthorization();
