@@ -1,0 +1,10 @@
+﻿# $ docker-compose up -d
+
+version: "3.7"
+
+services: 
+    api:
+        build: .
+        container_name: jwtswaggerhc-api
+        ports: 
+            - 8080:80
