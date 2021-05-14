@@ -5,3 +5,5 @@
 /.vs/JwtSwaggerHc
 /JwtSwaggerHc.API
 /JwtSwaggerHc.Dashboard
+/JwtSwaggerHc.Client/bin/Debug/net5.0
+/JwtSwaggerHc.Client/obj

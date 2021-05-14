@@ -69,6 +69,7 @@ namespace JwtSwaggerHc.API
                     foreach (var description in apiVersionProvider.ApiVersionDescriptions)
                     {
                         setup.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
+                        setup.DisplayOperationId();
                     }
                     
                     setup.RoutePrefix = "";

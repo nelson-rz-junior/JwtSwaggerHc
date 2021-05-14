@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -106,6 +107,11 @@ namespace JwtSwaggerHc.API.Extensions
                 var xmlCommentsFullPath = Path.Combine(AppContext.BaseDirectory, xmlCommentsFile);
 
                 setup.IncludeXmlComments(xmlCommentsFullPath);
+
+                setup.CustomOperationIds(apiDescription =>
+                {
+                    return apiDescription.TryGetMethodInfo(out MethodInfo methoInfo) ? methoInfo.Name : null;
+                });
             });
         }
 
